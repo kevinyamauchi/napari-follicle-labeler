@@ -10,7 +10,8 @@ When you re-open an image, the saved annotations are automatically loaded.
 
 Instructions:
 1. update the DIRECTORY_PATH to the path containing your datasets
-2. update the OUTPUT_DIRECTORY to the path where you want your annotations to be saved
+2. update the OUTPUT_DIRECTORY to the path where you want your
+   annotations to be saved
 3. run the script
 4. the first image will be loaded. one follicle will be shown at a time.
    Use the hot keys to annotate. when you press the key, the next follicle
@@ -19,23 +20,25 @@ Instructions:
      w - "merge" (merged follicles)
      e - "over" (annotation is too big)
      r - "under" (annotation is too small)
-   When you annotate a follicle, your action is confirmed and the fraction of follicles
-   you have annotated is displayed in a pop up and in the terminal.
+   When you annotate a follicle, your action is confirmed and the
+   fraction of follicles you have annotated is displayed in a pop up
+   and in the terminal.
+
    You can also manually move forward and backwards:
      d - show previous follicle
      f - show next follicle
    You can save your current annotations (will overwrite existing one)
      s - save current annotations (only for the open file)
    When you are done annotating a file, you can save and load the next file.
-   You will see a message printed in your terminal if there are unannotated follicles remaining.
-
+   You will see a message printed in your terminal
+   if there are unannotated follicles remaining.
 """
 
 import glob
 import os
 import time
-from typing import Tuple, Optional
 import warnings
+from typing import Optional, Tuple
 
 import h5py
 import napari
@@ -131,9 +134,10 @@ def _add_dataset_to_viewer(
     viewer.add_labels(follicle_labels, name="follicles")
 
 
-
 def _initialize_dataset(
-    viewer: napari.Viewer, raw_image_layer_name: str = "raw", follicle_labels_layer_name: str = "follicles"
+    viewer: napari.Viewer,
+    raw_image_layer_name: str = "raw",
+    follicle_labels_layer_name: str = "follicles",
 ) -> None:
     labels_layer = viewer.layers[follicle_labels_layer_name]
 
@@ -158,9 +162,13 @@ def _initialize_dataset(
     labels_layer.contour = 2
 
     # initialize the table
-    image_file_path = viewer.layers[raw_image_layer_name].metadata["image_path"]
+    image_file_path = viewer.layers[raw_image_layer_name].metadata[
+        "image_path"
+    ]
     image_file_name = os.path.basename(image_file_path)
-    table_file_path = os.path.join(OUTPUT_DIRECTORY, image_file_name.replace(".h5", ".csv"))
+    table_file_path = os.path.join(
+        OUTPUT_DIRECTORY, image_file_name.replace(".h5", ".csv")
+    )
     if os.path.isfile(table_file_path):
         follicle_table = pd.read_csv(table_file_path)
     else:
@@ -172,7 +180,7 @@ def _initialize_dataset(
             {
                 "file_path": [file_name] * n_indices,
                 "index": label_indices,
-                "annotation": empty_annotations
+                "annotation": empty_annotations,
             }
         )
         follicle_table.set_index("index", drop=False, inplace=True)
@@ -205,22 +213,19 @@ def _setup_viewer(initial_dataset_path: str) -> napari.Viewer:
     return viewer
 
 
-def _increment_index(
-    current_index: int,
-    n_indices: int
-):
+def _increment_index(current_index: int, n_indices: int):
     """Increment an index with wraparound."""
     return (current_index + 1) % n_indices
 
-def _decrement_index(
-    current_index: int,
-    n_indices: int
-):
+
+def _decrement_index(current_index: int, n_indices: int):
     """Decrement an index with wraparound."""
     return ((current_index - 1) + n_indices) % n_indices
 
 
-def _select_previous_label(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def _select_previous_label(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
 
     # get the current state
     labels_layer = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME]
@@ -237,7 +242,9 @@ def _select_previous_label(viewer: Optional[napari.Viewer]=None, event=None) -> 
     labels_layer.selected_label = new_label_value
 
 
-def _select_next_label(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def _select_next_label(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
 
     # get the current state
     labels_layer = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME]
@@ -254,7 +261,9 @@ def _select_next_label(viewer: Optional[napari.Viewer]=None, event=None) -> None
     labels_layer.selected_label = new_label_value
 
 
-def _annotate_selected_label(viewer: napari.Viewer, annotation: str, go_to_next_label: bool = True) -> None:
+def _annotate_selected_label(
+    viewer: napari.Viewer, annotation: str, go_to_next_label: bool = True
+) -> None:
     labels_layer = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME]
     follicle_table = labels_layer.metadata["annotations"]
 
@@ -270,45 +279,65 @@ def _annotate_selected_label(viewer: napari.Viewer, annotation: str, go_to_next_
     # -1 because background is included
     n_follicles = len(follicle_table) - 1
 
-    warnings.warn(f"follicle {label_value} is {annotation}. {n_annotated_follicles}/{n_follicles} follicles annotated")
+    confirmation_message = (
+        f"follicle {label_value} is {annotation}. "
+        + f"{n_annotated_follicles}/{n_follicles} follicles annotated"
+    )
+    warnings.warn(confirmation_message)
 
     if go_to_next_label is True:
         _select_next_label(viewer)
 
 
-def annotate_good_follicle(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def annotate_good_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     """annotate the selected follicle as good"""
     _annotate_selected_label(viewer, GOOD_ANNOTATION, go_to_next_label=True)
 
 
-def annotate_merge_follicle(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def annotate_merge_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     """annotate the selected follicle as merged"""
     _annotate_selected_label(viewer, MERGE_ANNOTATION, go_to_next_label=True)
 
 
-def annotate_over_follicle(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def annotate_over_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     """annotate the selected follicle as over labeled (too big)"""
     _annotate_selected_label(viewer, OVER_ANNOTATION, go_to_next_label=True)
 
 
-def annotate_under_follicle(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def annotate_under_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     """annotate the selected follicle as under labeled (too small)"""
     _annotate_selected_label(viewer, UNDER_ANNOTATION, go_to_next_label=True)
 
 
-def save_annotations(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def save_annotations(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     """Save the current annotations.
 
     Annotations are saved as CSV the OUTPUT_DIRECTORY with the same name as the
     image file name
     """
     # get the annotations
-    follicle_table = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME].metadata["annotations"]
+    follicle_table = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME].metadata[
+        "annotations"
+    ]
 
     # get the table file path
-    image_file_path = viewer.layers[RAW_IMAGE_LAYER_NAME].metadata["image_path"]
+    image_file_path = viewer.layers[RAW_IMAGE_LAYER_NAME].metadata[
+        "image_path"
+    ]
     image_file_name = os.path.basename(image_file_path)
-    table_file_path = os.path.join(OUTPUT_DIRECTORY, image_file_name.replace(".h5", ".csv"))
+    table_file_path = os.path.join(
+        OUTPUT_DIRECTORY, image_file_name.replace(".h5", ".csv")
+    )
 
     follicle_table.to_csv(table_file_path)
     warnings.warn(f"annotations saved to: {table_file_path}")
@@ -327,24 +356,33 @@ def _load_next_file(viewer: napari.Viewer) -> None:
     new_dataset_path = dataset_file_paths[current_dataset_index]
 
     # load the data
-    raw_image, follicle_labels = load_dataset(
-        new_dataset_path
-    )
+    raw_image, follicle_labels = load_dataset(new_dataset_path)
 
     # add the new data to the viewer
-    _add_dataset_to_viewer(viewer, raw_image=raw_image, follicle_labels=follicle_labels, image_path=new_dataset_path)
+    _add_dataset_to_viewer(
+        viewer,
+        raw_image=raw_image,
+        follicle_labels=follicle_labels,
+        image_path=new_dataset_path,
+    )
 
     # initialize the new layers
     _initialize_dataset(viewer)
 
 
-def save_and_next_file(viewer: Optional[napari.Viewer]=None, event=None) -> None:
+def save_and_next_file(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
     # save the annotations
     save_annotations(viewer)
 
     # check that all annotations were completed
-    follicle_table = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME].metadata["annotations"]
-    unannotated_follicle_table = follicle_table.loc[follicle_table["annotation"].isna()]
+    follicle_table = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME].metadata[
+        "annotations"
+    ]
+    unannotated_follicle_table = follicle_table.loc[
+        follicle_table["annotation"].isna()
+    ]
 
     if len(unannotated_follicle_table) > 0:
         unannotated_follicles = unannotated_follicle_table["index"].to_numpy()
@@ -353,7 +391,6 @@ def save_and_next_file(viewer: Optional[napari.Viewer]=None, event=None) -> None
 
     # advance to the next file
     _load_next_file(viewer)
-
 
 
 initial_file_path = dataset_file_paths[current_dataset_index]
