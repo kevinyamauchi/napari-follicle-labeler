@@ -20,6 +20,7 @@ Instructions:
      w - "merge" (merged follicles)
      e - "over" (annotation is too big)
      r - "under" (annotation is too small)
+     t - "split" (label split between two)
    When you annotate a follicle, your action is confirmed and the
    fraction of follicles you have annotated is displayed in a pop up
    and in the terminal.
@@ -30,6 +31,7 @@ Instructions:
    You can save your current annotations (will overwrite existing one)
      s - save current annotations (only for the open file)
    When you are done annotating a file, you can save and load the next file.
+     a - save anntations and advance to the next file
    You will see a message printed in your terminal
    if there are unannotated follicles remaining.
 """
@@ -79,6 +81,9 @@ OVER_ANNOTATION = "over"
 
 # follicle is under painted (too small)
 UNDER_ANNOTATION = "under"
+
+# follicle is split between two labels
+SPLIT_ANNOTATION = "split"
 
 # initialize the current dataset index
 # used to determine which file path to load
@@ -317,6 +322,15 @@ def annotate_under_follicle(
     _annotate_selected_label(viewer, UNDER_ANNOTATION, go_to_next_label=True)
 
 
+def annotate_split_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
+    """annotate the selected follicle as split
+    (two labels assigned to one follicle).
+    """
+    _annotate_selected_label(viewer, SPLIT_ANNOTATION, go_to_next_label=True)
+
+
 def save_annotations(
     viewer: Optional[napari.Viewer] = None, event=None
 ) -> None:
@@ -405,6 +419,7 @@ viewer.bind_key("q", annotate_good_follicle)
 viewer.bind_key("w", annotate_merge_follicle)
 viewer.bind_key("e", annotate_over_follicle)
 viewer.bind_key("r", annotate_under_follicle)
+viewer.bind_key("t", annotate_split_follicle)
 
 # add key binding to save annotations
 viewer.bind_key("s", save_annotations)
