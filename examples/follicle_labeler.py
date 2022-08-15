@@ -85,6 +85,9 @@ UNDER_ANNOTATION = "under"
 # follicle is split between two labels
 SPLIT_ANNOTATION = "split"
 
+# follicle label is a false positive
+FALSE_POSITIVE_ANNOTATION = "false_positive"
+
 # initialize the current dataset index
 # used to determine which file path to load
 current_dataset_index = 0
@@ -331,6 +334,17 @@ def annotate_split_follicle(
     _annotate_selected_label(viewer, SPLIT_ANNOTATION, go_to_next_label=True)
 
 
+def annotate_false_positive_follicle(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
+    """annotate the selected follicle as false positive
+    (not a follicle).
+    """
+    _annotate_selected_label(
+        viewer, FALSE_POSITIVE_ANNOTATION, go_to_next_label=True
+    )
+
+
 def save_annotations(
     viewer: Optional[napari.Viewer] = None, event=None
 ) -> None:
@@ -420,6 +434,8 @@ viewer.bind_key("w", annotate_merge_follicle)
 viewer.bind_key("e", annotate_over_follicle)
 viewer.bind_key("r", annotate_under_follicle)
 viewer.bind_key("t", annotate_split_follicle)
+viewer.bind_key("y", annotate_false_positive_follicle)
+
 
 # add key binding to save annotations
 viewer.bind_key("s", save_annotations)
