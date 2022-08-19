@@ -34,6 +34,8 @@ Instructions:
      a - save anntations and advance to the next file
    You will see a message printed in your terminal
    if there are unannotated follicles remaining.
+
+   "last_index": 40
 """
 
 import glob
@@ -49,11 +51,13 @@ import pandas as pd
 from scipy import ndimage as ndi
 
 # The path to the folder containing the data
-DIRECTORY_PATH = "./test_data"
-
+DIRECTORY_PATH = "/Users/kyamauch/Documents/ivf/curate_labels_20220810/kevin"
 
 # The path to the directory in which the annotations will be saved
-OUTPUT_DIRECTORY = "./annotations"
+OUTPUT_DIRECTORY = (
+    "/Users/kyamauch/Documents/ivf/"
+    + "curate_labels_20220810/kevin_annotations_20220815"
+)
 
 if not os.path.isdir(OUTPUT_DIRECTORY):
     os.mkdir(OUTPUT_DIRECTORY)
@@ -90,7 +94,7 @@ FALSE_POSITIVE_ANNOTATION = "false_positive"
 
 # initialize the current dataset index
 # used to determine which file path to load
-current_dataset_index = 0
+current_dataset_index = 47
 
 # get all of the files
 file_pattern = os.path.join(DIRECTORY_PATH, "*.h5")
@@ -383,6 +387,8 @@ def _load_next_file(viewer: napari.Viewer) -> None:
     # this will be a class property when moved into plugin
     global dataset_file_paths
     global current_dataset_index
+
+    print(f"finished dataset_index: {current_dataset_index}")
 
     # get the next file name
     n_files = len(dataset_file_paths)
