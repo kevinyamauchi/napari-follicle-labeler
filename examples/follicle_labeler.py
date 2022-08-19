@@ -163,8 +163,8 @@ def _initialize_dataset(
     viewer.dims.ndisplay = 2
 
     # view only currently selected label
-    labels_layer.show_selected_label = True
-    labels_layer.selected_label = label_values[0]
+    # labels_layer.show_selected_label = True
+    # labels_layer.selected_label = label_values[0]
 
     # show only the outline of the follicles
     labels_layer.contour = 2
@@ -179,6 +179,12 @@ def _initialize_dataset(
     )
     if os.path.isfile(table_file_path):
         follicle_table = pd.read_csv(table_file_path)
+        warnings.warn(
+            f"Loading existing annotations from {table_file_path}, "
+            f"current annotations will be overwritten. Current "
+            f"annotations ({follicle_table.annotation.count()}/"
+            f"{len(label_indices)})"
+        )
     else:
         file_name = os.path.basename(table_file_path)
         n_indices = len(label_indices)
@@ -421,6 +427,56 @@ def save_and_next_file(
     _load_next_file(viewer)
 
 
+def _load_previous_file(viewer: napari.Viewer) -> None:
+
+    # get the current index and paths
+    # this will be a class property when moved into plugin
+    global dataset_file_paths
+    global current_dataset_index
+
+    # get the next file name
+    n_files = len(dataset_file_paths)
+    current_dataset_index = _decrement_index(current_dataset_index, n_files)
+    new_dataset_path = dataset_file_paths[current_dataset_index]
+
+    # load the data
+    raw_image, follicle_labels = load_dataset(new_dataset_path)
+
+    # add the new data to the viewer
+    _add_dataset_to_viewer(
+        viewer,
+        raw_image=raw_image,
+        follicle_labels=follicle_labels,
+        image_path=new_dataset_path,
+    )
+
+    # initialize the new layers
+    _initialize_dataset(viewer)
+
+
+def save_and_previous_file(
+    viewer: Optional[napari.Viewer] = None, event=None
+) -> None:
+    # save the annotations
+    save_annotations(viewer)
+
+    # check that all annotations were completed
+    follicle_table = viewer.layers[FOLLICLE_IMAGE_LAYER_NAME].metadata[
+        "annotations"
+    ]
+    unannotated_follicle_table = follicle_table.loc[
+        follicle_table["annotation"].isna()
+    ]
+
+    if len(unannotated_follicle_table) > 0:
+        unannotated_follicles = unannotated_follicle_table["index"].to_numpy()
+        warnings.warn(f"{unannotated_follicles} have not been annotated")
+        time.sleep(1)
+
+    # advance to the previous file
+    _load_previous_file(viewer)
+
+
 initial_file_path = dataset_file_paths[current_dataset_index]
 viewer = _setup_viewer(initial_file_path)
 
@@ -443,6 +499,8 @@ viewer.bind_key("s", save_annotations)
 # add key binding to go to the next file
 viewer.bind_key("a", save_and_next_file)
 
+# add key binding to go to the previous file
+viewer.bind_key("x", save_and_previous_file)
 
 if __name__ == "__main__":
     napari.run()
