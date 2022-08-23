@@ -51,13 +51,10 @@ import pandas as pd
 from scipy import ndimage as ndi
 
 # The path to the folder containing the data
-DIRECTORY_PATH = "/Users/kyamauch/Documents/ivf/curate_labels_20220810/kevin"
+DIRECTORY_PATH = "./test_data/"
 
 # The path to the directory in which the annotations will be saved
-OUTPUT_DIRECTORY = (
-    "/Users/kyamauch/Documents/ivf/"
-    + "curate_labels_20220810/kevin_annotations_20220815"
-)
+OUTPUT_DIRECTORY = "./annotations/"
 
 if not os.path.isdir(OUTPUT_DIRECTORY):
     os.mkdir(OUTPUT_DIRECTORY)
@@ -484,6 +481,9 @@ def save_and_previous_file(
 
 
 initial_file_path = dataset_file_paths[current_dataset_index]
+initial_file_path = os.path.join(
+    DIRECTORY_PATH, "A01_z1_links_170415_ovary.h5"
+)
 viewer = _setup_viewer(initial_file_path)
 
 # add key bindings to increment/decrement labels
